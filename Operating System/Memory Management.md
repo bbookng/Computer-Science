@@ -313,4 +313,197 @@
     - 각 page entry가 4B시 프로세스당 4M의 page table 필요
     - 그러나, 대부분의 프로그램은 4G의 주소 공간 중 지극히 일부분만 사용하므로 page table 공간이 심하게 낭비됨
 
-  → 
+  →  page table 자체를 page로 구성
+
+  → 사용되지 않는 주소 공간에 대한 outer page table에 엔트리 값은 NULL
+       (대응하는 inner page table이 없음)
+
+
+
+#### 💡 Two-Level Paging Example
+
+- logical address (on 32-bit machine with 4K page size)의 구성
+  - 20 bit 의 page number
+  - 12 bit 의 page offset
+- page table 자체가 page로 구성되기 때문에 page number는 다음과 같이 나뉜다 (각 page table entry가 4B)
+  - 10-bit의 page number.
+  - 10-bit의 page offset.
+- 따라서, logical address는 다음과 같다
+  ![image-20220906003238173](assets/image-20220906003238173.png)
+- P₁은 outer page table의 index 이고
+- P₂는 outer page table의 page에서의 변위(displacement)
+
+
+
+#### 💡 Address-Translation Scheme
+
+- 2단계 페이징에서의 Address-translation scheme
+
+![image-20220906003056890](assets/image-20220906003056890.png)
+
+
+
+#### 💡 Multilevel Paging and Performance
+
+- Address space가 더 커지면 다단계 페이지 테이블 필요
+
+- 각 단계의 페이지 테이블이 메모리에 존재하므로 logical address의 physical address 변환에 더 많은 메모리 접근 필요
+
+- 캐쉬 메모리를 통해 메모리 접근 시간을 줄일 수 있음
+
+- 4단계 페이지 테이블을 사용하는 경우
+
+  - 메모리 접근 시간이 100ns, 캐쉬 메모리 접근 시간이 20ns이고 
+  - 캐쉬 적중률이 98%인 경우
+    effective memory access time = 0.98 x 120 + 0.02 x 520 = 128 nanoseconds.
+
+  결과적으로 메모리 접근 시간을 28%만 down 시킴
+
+
+
+#### 💡 Valid (v) / Invalid (i) Bit in a Page Table
+
+![image-20220906162608105](assets/image-20220906162608105.png)
+
+
+
+#### 💡 Memory Protection
+
+- Page table의 각 entry 마다 아래의 bit를 둔다
+
+  - **Protection bit**
+
+    - page에 대한 접근 권한 (read/write/read-only)
+    - 어떤 연산에 관한 접근 권한
+
+  - **Valid-invalid bit**
+
+    - "valid"는 해당 주소의 frame에 그 프로세스를 구성하는 유효한 내용이 있음을 뜻함 (접근 허용)
+    - "invalid"는 해당 주소의 frame에 유효한 내용이 없음*을 뜻함 (접근 불허)
+
+    
+
+    *****
+
+    '*' i) 프로세스가 그 주소 부분을 사용하지 않는 경우
+         ii) 해당 페이지가 메모리에 올라와 있지 않고 swap area에 있는 경우
+
+
+
+#### 💡 Inverted Page Table
+
+- page table이 매우 큰 이유
+  - 모든 process 별로 그 logical address에 대응하는 모든 page에 대해 page table entry가 존재
+  - 대응하는 page가 메모리에 있든 아니든 간에 page table에는 entry로 존재
+- Inverted page table
+  - Page frame 하나당 page table에 하나의 entry를 둔 것 (system-wide)
+  - 각 page table entry는  각각의 물리적 메모리의 page frame이 담고 있는 내용 표시
+    (process-id, process의 logical address)
+  - 단점
+    - 테이블 전체를 탐색해야 함
+  - 조치
+    - associative register 사용 (expensive)
+
+![image-20220906171932696](assets/image-20220906171932696.png)
+
+
+
+#### 💡 Shared Page
+
+- **Shared code**
+  - **Re-entrant Code (=Pure code)**
+  - read-only 로 하여 프로세스 간에 하나의 code만 메모리에 올림
+    (ex. text editors, compilers, window systems).
+  - Shared code는 모든 프로세스의 logical address space에서 동일한 위치에 있어야 함
+- **Private code and data**
+  - 각 프로세스들은 독자적으로 메모리에 올림
+  - Private data는 logical address space의 아무 곳에 와도 무방
+
+![image-20220906174401917](assets/image-20220906174401917.png)
+
+
+
+#### 💡 Segmentation
+
+- 프로그램은 의미 단위인 여러 개의 segment로 구성
+
+  - 작게는 프로그램을 구성하는 함수 하나하나를 세그먼트로 정의
+  - 크게는 프로그램 전체를 하나의 세그먼트로 정의 가능
+  - 일반적으로는 code, data, stack 부분이 하나씩의 세그먼트로 정의됨
+
+- Segment는 다음과 같은 *logical unit* 들임
+
+  ```
+  main(),
+  function,
+  global variables,
+  stack,
+  symbol table, arrays
+  ```
+
+
+
+#### 💡 Segmentation Architecture
+
+- Logical address 는 다음의 두 가지로 구성 `< segment-number, offset >`
+- **Segment table**
+  - each table entry has:
+    - base - starting physical address of the segment
+    - limit - length of the segment (segment의 길이)
+- **Segment-table base register (STBR)**
+  - 물리적 메모리에서의 segment table의 위치
+
+- **Segment-table lenth register (STLR)**
+  - 프로그램이 사용하는 segment의 수
+    `segment number s is legal if s < STLR`
+
+
+
+#### 💡 Segmentation Hardware
+
+![image-20220906175316520](assets/image-20220906175316520.png)
+
+
+
+#### 💡Segmentation Architecture (Cont.)
+
+- **Protection**
+
+  - 각 세그먼트 별로 protection bit가 있음
+  - Each entry:
+    - Valid bit = 0 → illegal segment
+    - Read/Write/Execution 권한 bit
+
+- **Sharing**
+
+  - shared segment
+  - same segment number
+
+  *** segment는 의미 단위이기 때문에 공유(sharing)와 보안(protection)에 있어 paging보다 훨씬 효과적이다.
+
+- **Allocation**
+
+  - first fit / best fit
+  - external fragmentation 발생
+
+  *** segment 의 길이가 동일하지 않으므로 가변분할 방식에서와 동일한 문제점들이 발생
+
+#### 💡 Sharing of Segment
+
+![image-20220906194313180](assets/image-20220906194313180.png)
+
+
+
+#### 💡 Segmentation with Paging
+
+- pure segmentation 과의 차이점
+  - segment-table entry가 segment의 base address 를 가지고 있는 것이 아니라 segment를 구성하는 page table의 base address 를 가지고 있음
+
+![image-20220906195403414](assets/image-20220906195403414.png)
+
+
+
+
+
+
+
