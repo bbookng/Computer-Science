@@ -25,7 +25,7 @@
 - TOS (Type of Service) : 옛날에 쓰던거 (비워둠)
 - Total Length : Payload 를 포함한 전체 길이
 - Identification : 패킷의 데이터 식별자
-- Flag (bit)
+- IP Flag (bit)
   - D(Dont' Fragmentation) : 데이터를 안쪼개서 보내겠다. (최대 단위보다 크면 전송 안됨)
   - M(More Fragmentation) : 최대 전송단위보다 큰걸 보내면 무조건 설정
     - 뒤에 있으면 1, 없으면 0
@@ -42,6 +42,10 @@
 
 ### 📌 ICMP 프로토콜
 
+- ICMP (Internet Control Message Protocol, 인터넷 제어 메시지 프로토콜)
+- 네트워크 컴퓨터 위에서 돌아가는 운영체제에서 **오류 메시지**를 전송 받는 데 주로 쓰인다.
+- 프로토콜 구조의 Type 과 Code 를 통해 오류 메시지를 전송 받는다.
+
 #### 💡 ICMP 프로토콜의 구조
 
 - **ICMP 프로토콜** : 특정 대상과 내가 통신이 잘되는지 확인하기 위한 프로토콜
@@ -50,9 +54,9 @@
 
 - **Type (대분류)**
   - 8 (요청), 0 (응답)
-  - 3 : 목적지 도달 불가능
+  - 3 : 목적지 도달 불가능 ( Destination Unreachable )
     - 경로 설정이 잘못 되었음
-  - 11 : 목적지까지 갔지만 응답을 받지 못함
+  - 11 : 목적지까지 갔지만 응답을 받지 못함 ( Time Exceeded)
     - 상대방에 문제가 있음 ex) 방화벽 때문에 컷 당함
   - 5 : ICMP redirect
     - 남의 Routing Table 바꾸는 것
